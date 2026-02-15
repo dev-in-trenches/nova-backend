@@ -17,11 +17,8 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Create enum type for user roles
-    userrole_enum = postgresql.ENUM('user', 'admin', name='userrole', create_type=True)
-    userrole_enum.create(op.get_bind(), checkfirst=True)
-    
     # Create users table with all columns including role
+    # Note: Using VARCHAR for role instead of native enum for compatibility
     op.create_table(
         'users',
         sa.Column('id', sa.Integer(), nullable=False),
@@ -29,7 +26,7 @@ def upgrade() -> None:
         sa.Column('username', sa.String(), nullable=False),
         sa.Column('hashed_password', sa.String(), nullable=False),
         sa.Column('full_name', sa.String(), nullable=True),
-        sa.Column('role', postgresql.ENUM('user', 'admin', name='userrole', create_type=False), nullable=False, server_default='user'),
+        sa.Column('role', sa.String(), nullable=False, server_default='user'),
         sa.Column('is_active', sa.Boolean(), nullable=True, server_default='true'),
         sa.Column('is_superuser', sa.Boolean(), nullable=True, server_default='false'),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
@@ -49,6 +46,3 @@ def downgrade() -> None:
     
     # Drop users table
     op.drop_table('users')
-    
-    # Drop enum type
-    op.execute("DROP TYPE IF EXISTS userrole")
