@@ -22,6 +22,12 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # Admin User (created on startup)
+    ADMIN_EMAIL: Optional[str] = None
+    ADMIN_USERNAME: Optional[str] = None
+    ADMIN_PASSWORD: Optional[str] = None
+    ADMIN_FULL_NAME: str = "Site Administrator"
+
     # CORS
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000"]
     ALLOWED_HOSTS: List[str] = ["*"]
