@@ -1,4 +1,4 @@
-.PHONY: help install run test lint format migrate clean docker-up docker-down
+.PHONY: help install run test lint format migrate seed clean docker-up docker-down
 
 help:
 	@echo "Available commands:"
@@ -8,6 +8,7 @@ help:
 	@echo "  make lint        - Run linters"
 	@echo "  make format      - Format code"
 	@echo "  make migrate     - Run database migrations"
+	@echo "  make seed        - Seed database with initial data"
 	@echo "  make clean       - Clean cache files"
 	@echo "  make docker-up   - Start Docker containers"
 	@echo "  make docker-down - Stop Docker containers"
@@ -31,6 +32,9 @@ format:
 
 migrate:
 	alembic upgrade head
+
+seed:
+	python seeds/seed_users.py
 
 clean:
 	find . -type d -name __pycache__ -exec rm -r {} +
