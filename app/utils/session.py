@@ -14,7 +14,7 @@ async def create_session(user_id: int, ttl: int = SESSION_TTL):
     session_id = str(uuid.uuid4())
     session_data = {"user_id": user_id}
 
-    await redis.set(f"session:{session_id}", json.dumps(session_data), ex=ttl)
+    await redis.set(session_key(session_id), json.dumps(session_data), ex=ttl)
 
     return session_id
 
@@ -24,7 +24,7 @@ async def get_session(session_id: str):
     if not redis:
         raise Exception("Redis not initialized")
 
-    data = await redis.get(f"session:{session_id}")
+    data = await redis.get(session_key(session_id))
     if not data:
         return None
     return json.loads(data)
@@ -35,4 +35,7 @@ async def delete_session(session_id: str):
     if not redis:
         raise Exception("Redis not initialized")
 
-    await redis.delete(f"session:{session_id}")
+    await redis.delete(session_key(session_id))
+
+def session_key(session_id: str) -> str:
+    return f"session:{session_id}"

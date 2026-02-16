@@ -9,7 +9,7 @@ async def cache_set(key: str, value: Any, ttl: int = DEFAULT_TTL):
     if not redis:
         raise RuntimeError("Redis not initialized")
 
-    await redis.set(key, json.dumps(value), ex=ttl)
+    await redis.set(cache_key(key), json.dumps(value), ex=ttl)
 
 
 async def cache_get(key: str) -> Optional[Any]:
@@ -17,7 +17,7 @@ async def cache_get(key: str) -> Optional[Any]:
     if not redis:
         raise RuntimeError("Redis not initialized")
 
-    data = await redis.get(key)
+    data = await redis.get(cache_key(key))
     if data:
         return json.loads(data)
     return None
@@ -28,4 +28,7 @@ async def cache_delete(key: str):
     if not redis:
         raise RuntimeError("Redis not initialized")
 
-    await redis.delete(key)
+    await redis.delete(cache_key(key))
+
+def cache_key(*args: Any) -> str:
+    return "cache:" + ":".join(map(str, args))
