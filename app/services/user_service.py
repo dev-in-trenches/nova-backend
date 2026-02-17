@@ -1,6 +1,7 @@
 """User service with business logic."""
 
 from typing import List, Optional
+from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.repositories.user_repository import UserRepository
@@ -41,7 +42,7 @@ class UserService:
             created_at=user.created_at,
         )
 
-    async def get_user_by_id(self, user_id: int) -> UserResponse:
+    async def get_user_by_id(self, user_id: UUID) -> UserResponse:
         """
         Get user by ID.
 
@@ -76,7 +77,7 @@ class UserService:
         return [self._to_response(user) for user in users]
 
     async def update_user(
-        self, user_id: int, user_update: UserUpdate
+        self, user_id: UUID, user_update: UserUpdate
     ) -> UserResponse:
         """
         Update user information.
@@ -111,7 +112,7 @@ class UserService:
         return self._to_response(updated_user)
 
     async def update_user_role(
-        self, user_id: int, role: UserRole
+        self, user_id: UUID, role: UserRole
     ) -> UserResponse:
         """
         Update user role.
@@ -130,9 +131,9 @@ class UserService:
         if not user:
             raise NotFoundError("User not found")
 
-        is_superuser = role == UserRole.ADMIN
+        is_admin = role == UserRole.ADMIN
         updated_user = await self.repository.update(
-            user_id, role=role, is_superuser=is_superuser
+            user_id, role=role, is_admin=is_admin
         )
         if not updated_user:
             raise NotFoundError("User not found")
@@ -140,7 +141,7 @@ class UserService:
         return self._to_response(updated_user)
 
     async def toggle_user_activation(
-        self, user_id: int, is_active: bool
+        self, user_id: UUID, is_active: bool
     ) -> UserResponse:
         """
         Activate or deactivate a user.

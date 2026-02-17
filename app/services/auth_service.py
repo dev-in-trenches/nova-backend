@@ -14,6 +14,7 @@ from app.core.security import (
 )
 from app.db.repositories.user_repository import UserRepository
 from app.db.models.user import User, UserRole
+import uuid
 from app.api.v1.schemas.auth import Token, TokenRefresh, UserCreate, UserResponse
 from app.core.exceptions import BadRequestError, UnauthorizedError, ForbiddenError
 
@@ -78,7 +79,7 @@ class AuthService:
         new_user = await self.repository.create(
             email=user_data.email,
             username=user_data.username,
-            hashed_password=hashed_password,
+            password_hash=hashed_password,
             full_name=user_data.full_name,
             role=UserRole.USER,
             is_active=True,
@@ -106,7 +107,7 @@ class AuthService:
         # Find user by username or email
         user = await self.repository.get_by_email_or_username(username_or_email)
 
-        if not user or not verify_password(password, user.hashed_password):
+        if not user or not verify_password(password, user.password_hash):
             raise UnauthorizedError("Incorrect username or password")
 
         if not user.is_active:
@@ -117,16 +118,16 @@ class AuthService:
         access_token = create_access_token(
             data={
                 "sub": user.username,
-                "user_id": user.id,
+                "user_id": str(user.id),
                 "role": user.role.value if user.role else "user",
-                "is_superuser": user.is_superuser,
+                "is_admin": user.is_admin,
             },
             expires_delta=access_token_expires,
         )
         refresh_token = create_refresh_token(
             data={
                 "sub": user.username,
-                "user_id": user.id,
+                "user_id": str(user.id),
                 "role": user.role.value if user.role else "user",
             }
         )
@@ -158,6 +159,12 @@ class AuthService:
         username = payload.get("sub")
         user_id = payload.get("user_id")
 
+        # convert user_id string from token to UUID
+        try:
+            user_id = uuid.UUID(user_id) if user_id else None
+        except Exception:
+            raise UnauthorizedError("Invalid token payload")
+
         if not username or not user_id:
             raise UnauthorizedError("Invalid token payload")
 
@@ -177,7 +184,7 @@ class AuthService:
                 "sub": username,
                 "user_id": user_id,
                 "role": role,
-                "is_superuser": user.is_superuser,
+                "is_admin": user.is_admin,
             },
             expires_delta=access_token_expires,
         )
