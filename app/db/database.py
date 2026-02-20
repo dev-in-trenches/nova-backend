@@ -73,11 +73,11 @@ async def init_db() -> None:
                     admin_user = User(
                         email=settings.ADMIN_EMAIL,
                         username=settings.ADMIN_USERNAME,
-                        hashed_password=get_password_hash(settings.ADMIN_PASSWORD),
+                        password_hash=get_password_hash(settings.ADMIN_PASSWORD),
                         full_name=settings.ADMIN_FULL_NAME,
                         role=UserRole.ADMIN,
                         is_active=True,
-                        is_superuser=True,
+                        is_admin=True,
                     )
 
                     session.add(admin_user)
@@ -87,7 +87,7 @@ async def init_db() -> None:
                     # Update existing admin if needed
                     if existing_admin.role != UserRole.ADMIN:
                         existing_admin.role = UserRole.ADMIN
-                        existing_admin.is_superuser = True
+                        existing_admin.is_admin = True
                         await session.commit()
                         logger.info(
                             f"Existing user promoted to admin: {existing_admin.username}"

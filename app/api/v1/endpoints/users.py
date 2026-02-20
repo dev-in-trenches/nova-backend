@@ -1,6 +1,7 @@
 """User endpoints."""
 
 from typing import List
+from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,7 +41,7 @@ async def get_users(
 
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
-    user_id: int,
+    user_id: UUID,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
