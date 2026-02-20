@@ -1,7 +1,10 @@
 """Health check endpoints."""
 
-from fastapi import APIRouter
 from datetime import datetime
+
+from fastapi import APIRouter
+
+from app.core.redis import redis_client
 
 router = APIRouter()
 
@@ -19,8 +22,13 @@ async def health_check():
 async def readiness_check():
     """Readiness check endpoint."""
     # Add database connectivity check here if needed
+    redis = redis_client.redis
+    is_redis_connected = False
+    if redis:
+        is_redis_connected = await redis.ping()
     return {
         "status": "ready",
+        "redis": "connected" if is_redis_connected else "disconnected",
         "timestamp": datetime.utcnow().isoformat(),
     }
 

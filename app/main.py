@@ -14,6 +14,7 @@ from app.core.exceptions import (
     validation_exception_handler,
     general_exception_handler,
 )
+from app.core.redis import redis_client
 from app.api.v1.router import api_router
 from app.db.database import init_db
 from fastapi.exceptions import RequestValidationError
@@ -26,6 +27,7 @@ async def lifespan(app: FastAPI):
     # Startup
     setup_logging()
     await init_db()
+    await redis_client.connect(settings.REDIS_URL)
     yield
     # Shutdown
     pass

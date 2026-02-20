@@ -1,9 +1,10 @@
 """Database connection and session management."""
 
 import logging
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import declarative_base
+
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import declarative_base
 
 from app.core.config import settings
 
@@ -46,7 +47,7 @@ async def init_db() -> None:
     """Initialize database (create tables and admin user)."""
     # Import models here to avoid circular import
     from app.db.models.user import User, UserRole
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -54,7 +55,7 @@ async def init_db() -> None:
     if settings.ADMIN_EMAIL and settings.ADMIN_USERNAME and settings.ADMIN_PASSWORD:
         # Import here to avoid circular import
         from app.core.security import get_password_hash
-        
+
         async with AsyncSessionLocal() as session:
             try:
                 # Check if admin user already exists
@@ -78,6 +79,7 @@ async def init_db() -> None:
                         is_active=True,
                         is_superuser=True,
                     )
+
                     session.add(admin_user)
                     await session.commit()
                     logger.info(f"Admin user created: {settings.ADMIN_USERNAME}")
