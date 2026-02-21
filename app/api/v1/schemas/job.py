@@ -3,7 +3,7 @@ from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, ConfigDict
 
 
 class PlatformEnum(str, Enum):
@@ -17,7 +17,7 @@ class JobPostingBase(BaseModel):
     platform: PlatformEnum
     job_title: str
     description: str
-    budget: Optional[float]
+    budget: Optional[float] = None
     required_skills: List[str]
     url: HttpUrl
     extracted_at: datetime
@@ -31,5 +31,4 @@ class JobPostingResponse(JobPostingBase):
     id: UUID
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
