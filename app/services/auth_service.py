@@ -49,6 +49,12 @@ class AuthService:
             role=user.role.value if user.role else "user",
             is_active=user.is_active,
             created_at=user.created_at,
+            is_admin=getattr(user, "is_admin", False),
+            skills=getattr(user, "skills", []),
+            experience_summary=getattr(user, "experience_summary", ""),
+            portfolio_links=getattr(user, "portfolio_links", []),
+            preferred_rate=getattr(user, "preferred_rate", 0.0),
+            updated_at=getattr(user, "updated_at", user.created_at),
         )
 
     async def register_user(self, user_data: UserCreate) -> UserResponse:
@@ -77,12 +83,16 @@ class AuthService:
         # Create new user
         hashed_password = get_password_hash(user_data.password)
         new_user = await self.repository.create(
-            email=user_data.email,
-            username=user_data.username,
-            password_hash=hashed_password,
-            full_name=user_data.full_name,
-            role=UserRole.USER,
-            is_active=True,
+        email=user_data.email,
+        username=user_data.username,
+        password_hash=hashed_password,
+        full_name=user_data.full_name,
+        role=UserRole.USER,
+        is_active=True,
+        skills=user_data.skills,
+        experience_summary=user_data.experience_summary,
+        portfolio_links=[str(link) for link in user_data.portfolio_links],
+        preferred_rate=user_data.preferred_rate,
         )
 
         return self._to_response(new_user)
