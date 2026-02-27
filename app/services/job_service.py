@@ -60,13 +60,7 @@ class JobPostingService:
         """
 
         updated_job = await self.repository.update(
-            id=id,
-            platform=payload.platform,
-            job_title=payload.job_title,
-            description=payload.description,
-            budget=payload.budget,
-            required_skills=payload.required_skills,
-            url=str(payload.url),
+            id=id, **payload.model_dump(exclude_unset=True)
         )
 
         return JobPostingResponse.model_validate(updated_job)

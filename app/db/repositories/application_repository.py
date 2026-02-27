@@ -1,11 +1,12 @@
 """Application repository for applications specific"""
 
+from typing import Literal, Optional
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import select
 
-from app.db.models.application import Application
+from app.db.models.application import Application, ApplicationStatus
 from app.db.repositories.base import BaseRepository
 
 
@@ -17,15 +18,28 @@ class ApplicationRepository(BaseRepository[Application]):
         super().__init__(Application, session)
 
     async def get_by_user_id(
-        self, user_id: UUID, skip: int = 0, limit: int = 20
+        self,
+        user_id: UUID,
+        skip: int = 0,
+        limit: int = 20,
+        status: Optional[ApplicationStatus] = None,
+        sort: Literal["asc", "desc"] = "desc",
     ) -> list[Application]:
         """Get applications by user id."""
 
+        query = select(Application).where(Application.user_id == user_id)
+
+        if status is not None:
+            query = query.where(Application.status == status)
+
+        order_by = (
+            Application.created_at.asc()
+            if sort == "asc"
+            else Application.created_at.desc()
+        )
+
         result = await self.session.execute(
-            select(Application)
-            .where(Application.user_id == user_id)
-            .offset(skip)
-            .limit(limit)
+            query.order_by(order_by).offset(skip).limit(limit)
         )
         return list(result.scalars().all())
 

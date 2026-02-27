@@ -1,16 +1,17 @@
 """Application Service for create, get, delete"""
 
 from datetime import datetime
+from typing import Literal, Optional
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql.coercions import name
 
 from app.api.v1.schemas.application import (
     ApplicationCreate,
     ApplicationResponse,
     ApplicationUpdate,
 )
+from app.core.exceptions import NotFoundError
 from app.db.models.application import ApplicationStatus
 from app.db.repositories.application_repository import ApplicationRepository
 
@@ -53,7 +54,12 @@ class ApplicationService:
         return ApplicationResponse.model_validate(new_app)
 
     async def get_applications(
-        self, user_id: UUID, skip: int = 0, limit: int = 20
+        self,
+        user_id: UUID,
+        skip: int = 0,
+        limit: int = 20,
+        status: Optional[ApplicationStatus] = None,
+        sort: Literal["asc", "desc"] = "desc",
     ) -> list[ApplicationResponse]:
         """Get applications by user ID.
 
@@ -61,12 +67,16 @@ class ApplicationService:
             user_id: User ID
             skip: Number of applications to skip
             limit: Maximum number of applications to return
+            status: Optional application status filter
+            sort: Sort order for created_at ("asc" or "desc")
 
         Returns:
             List of application responses
         """
 
-        applications = await self.repository.get_by_user_id(user_id, skip, limit)
+        applications = await self.repository.get_by_user_id(
+            user_id, skip, limit, status, sort
+        )
 
         return [ApplicationResponse.model_validate(app) for app in applications]
 
@@ -108,18 +118,17 @@ class ApplicationService:
         )
 
         if not application:
-            raise ValueError("Application not found")
-
-        if payload.status == ApplicationStatus.submitted:
-            payload.submitted_at = datetime.utcnow()
+            raise NotFoundError("Application not found")
+        submitted_at = (
+            datetime.utcnow()
+            if payload.status == ApplicationStatus.submitted
+            else application.submitted_at
+        )
 
         updated_app = await self.repository.update(
             id=application_id,
-            status=payload.status,
-            proposal_content=payload.proposal_content,
-            bid_amount=payload.bid_amount,
-            milestones=payload.milestones,
-            submitted_at=payload.submitted_at,
+            **payload.model_dump(exclude_unset=True),
+            submitted_at=submitted_at,
         )
 
         return ApplicationResponse.model_validate(updated_app)
@@ -140,7 +149,7 @@ class ApplicationService:
         )
 
         if not application:
-            raise ValueError("Application not found")
+            raise NotFoundError("Application not found")
 
         return await self.repository.delete(
             id=application_id,

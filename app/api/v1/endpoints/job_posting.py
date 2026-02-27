@@ -10,7 +10,7 @@ from app.api.v1.schemas.job import (
     JobPostingResponse,
     JobPostingUpsert,
 )
-from app.core.exceptions import AppException
+from app.core.exceptions import AppException, NotFoundError
 from app.db.database import get_db
 from app.services.job_service import JobPostingService
 
@@ -25,7 +25,6 @@ async def create_jobposting(
     try:
         jobposting_service = JobPostingService(db)
         jobposting = await jobposting_service.repository.get_by_url(str(payload.url))
-        print(jobposting, payload)
 
         if jobposting is not None:
             return await jobposting_service.update_jobposting(
@@ -59,6 +58,10 @@ async def get_jobposting(
     try:
         jobposting_service = JobPostingService(db)
         jobposting = await jobposting_service.get_jobposting(job_id)
+
+        if not jobposting:
+            raise NotFoundError("Job posting not found")
+
         return jobposting
     except AppException as e:
         raise e

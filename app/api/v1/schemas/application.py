@@ -1,8 +1,10 @@
-from pydantic import BaseModel, ConfigDict
-from uuid import UUID
-from typing import Optional
 from datetime import datetime
 from decimal import Decimal
+from typing import Optional
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
+
 from app.db.models.application import ApplicationStatus
 
 
@@ -24,7 +26,6 @@ class ApplicationUpdate(BaseModel):
     proposal_content: Optional[str]
     bid_amount: Optional[Decimal]
     milestones: Optional[list]
-    submitted_at: Optional[datetime]
 
 
 class ApplicationResponse(ApplicationBase):
@@ -32,6 +33,5 @@ class ApplicationResponse(ApplicationBase):
     user_id: UUID
     created_at: datetime
     updated_at: datetime
-    submitted_at: Optional[datetime]
 
     model_config = ConfigDict(from_attributes=True)

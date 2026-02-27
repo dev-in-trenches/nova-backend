@@ -1,6 +1,6 @@
 """Application endpoints."""
 
-from datetime import datetime
+from typing import Literal, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
@@ -11,7 +11,7 @@ from app.api.v1.schemas.application import (
     ApplicationResponse,
     ApplicationUpdate,
 )
-from app.core.exceptions import AppException
+from app.core.exceptions import AppException, NotFoundError
 from app.core.security import get_current_user
 from app.db.database import get_db
 from app.db.models.application import ApplicationStatus
@@ -39,13 +39,15 @@ async def create_application(
 async def get_applications(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
+    status: ApplicationStatus = Query(None),
+    sort: Literal["asc", "desc"] = Query("desc"),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
     try:
         application_service = ApplicationService(db)
         return await application_service.get_applications(
-            current_user["user_id"], skip, limit
+            current_user["user_id"], skip, limit, status, sort
         )
     except AppException as e:
         raise e
@@ -59,9 +61,14 @@ async def get_application(
 ):
     try:
         application_service = ApplicationService(db)
-        return await application_service.get_application(
+        app = await application_service.get_application(
             current_user["user_id"], application_id
         )
+
+        if not app:
+            raise NotFoundError("Application not found")
+
+        return app
     except AppException as e:
         raise e
 
@@ -82,7 +89,7 @@ async def update_application(
         raise e
 
 
-@router.delete("/{application_id}", response_model=bool)
+@router.delete("/{application_id}", status_code=204)
 async def delete_application(
     application_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -90,8 +97,9 @@ async def delete_application(
 ):
     try:
         application_service = ApplicationService(db)
-        return await application_service.delete_application(
+        await application_service.delete_application(
             current_user["user_id"], application_id
         )
+        return None
     except AppException as e:
         raise e
