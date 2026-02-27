@@ -1,10 +1,17 @@
 """Application Service for create, get, delete"""
 
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.coercions import name
 
-from app.api.v1.schemas.application import ApplicationCreate, ApplicationResponse
+from app.api.v1.schemas.application import (
+    ApplicationCreate,
+    ApplicationResponse,
+    ApplicationUpdate,
+)
+from app.db.models.application import ApplicationStatus
 from app.db.repositories.application_repository import ApplicationRepository
 
 
@@ -81,3 +88,60 @@ class ApplicationService:
         )
 
         return ApplicationResponse.model_validate(application) if application else None
+
+    async def update_application(
+        self, user_id: UUID, application_id: UUID, payload: ApplicationUpdate
+    ) -> ApplicationResponse:
+        """Update application by application ID.
+
+        Args:
+            user_id: User ID
+            application_id: Application ID
+            payload: Application update payload
+
+        Returns:
+            Application ApplicationResponse
+        """
+
+        application = await self.repository.get_by_application_id(
+            user_id, application_id
+        )
+
+        if not application:
+            raise ValueError("Application not found")
+
+        if payload.status == ApplicationStatus.submitted:
+            payload.submitted_at = datetime.utcnow()
+
+        updated_app = await self.repository.update(
+            id=application_id,
+            status=payload.status,
+            proposal_content=payload.proposal_content,
+            bid_amount=payload.bid_amount,
+            milestones=payload.milestones,
+            submitted_at=payload.submitted_at,
+        )
+
+        return ApplicationResponse.model_validate(updated_app)
+
+    async def delete_application(self, user_id: UUID, application_id: UUID) -> bool:
+        """Delete application by application ID.
+
+        Args:
+            user_id: User ID
+            application_id: Application ID
+
+        Returns:
+            Application ApplicationResponse
+        """
+
+        application = await self.repository.get_by_application_id(
+            user_id, application_id
+        )
+
+        if not application:
+            raise ValueError("Application not found")
+
+        return await self.repository.delete(
+            id=application_id,
+        )
