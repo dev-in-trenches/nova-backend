@@ -40,6 +40,12 @@ class UserService:
             role=user.role.value if user.role else "user",
             is_active=user.is_active,
             created_at=user.created_at,
+            is_admin=getattr(user, "is_admin", False),
+            skills=getattr(user, "skills", []),
+            experience_summary=getattr(user, "experience_summary", None),
+            portfolio_links=getattr(user, "portfolio_links", []),
+            preferred_rate=getattr(user, "preferred_rate", None),
+            updated_at=getattr(user, "updated_at", user.created_at)
         )
 
     async def get_user_by_id(self, user_id: UUID) -> UserResponse:
@@ -77,7 +83,7 @@ class UserService:
         return [self._to_response(user) for user in users]
 
     async def update_user(
-        self, user_id: UUID, user_update: UserUpdate
+        self, user_id: UUID, user_update: UserUpdate, partial: bool = True
     ) -> UserResponse:
         """
         Update user information.
@@ -97,7 +103,14 @@ class UserService:
         if not user:
             raise NotFoundError("User not found")
 
-        update_data = user_update.model_dump(exclude_unset=True)
+        update_data = user_update.model_dump(exclude_unset=partial, mode="json")
+
+        if not partial:
+            protected_fields = ["is_active", "role"]
+            for field in protected_fields:
+                if update_data.get(field) is None:
+                    # Fallback to the current value in the DB
+                    update_data[field] = getattr(user, field)
 
         # Check if email is being updated and if it already exists
         if "email" in update_data and update_data["email"] != user.email:

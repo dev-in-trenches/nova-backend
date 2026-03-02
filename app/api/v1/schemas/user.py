@@ -31,7 +31,9 @@ class UserUpdate(BaseModel):
     Schema for updating User profiles. 
     """
     email: Optional[EmailStr] = None
-    username: Optional[str] = Field(None, min_length=3, max_length=100)
+    username: Optional[str] = Field(
+        None, min_length=3, max_length=100, pattern="^[a-zA-Z0-9_-]+$"
+    )
     password: Optional[str] = Field(None, min_length=8)
     full_name: Optional[str] = None
     role: Optional[UserRole] = None
@@ -39,7 +41,7 @@ class UserUpdate(BaseModel):
     skills: Optional[List[str]] = None
     experience_summary: Optional[str] = None
     portfolio_links: Optional[List[HttpUrl]] = None
-    preferred_rate: Optional[Decimal] = None
+    preferred_rate: Optional[Decimal] = Field(None, gt=0, description="Hourly rate must be positive")
 
 # --- Read/Response Schema ---
 class UserResponse(BaseModel):
@@ -52,7 +54,7 @@ class UserResponse(BaseModel):
     is_admin: bool
     skills: List[str]
     experience_summary: Optional[str]
-    portfolio_links: List[HttpUrl]
+    portfolio_links: List[str]
     preferred_rate: Optional[Decimal]
     created_at: datetime
     updated_at: datetime
