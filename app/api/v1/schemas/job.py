@@ -1,16 +1,10 @@
 from datetime import datetime
-from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, HttpUrl, ConfigDict
+from pydantic import BaseModel, ConfigDict, HttpUrl
 
-
-class PlatformEnum(str, Enum):
-    """Enum for job posting platforms"""
-
-    upwork = "upwork"
-    freelancer = "freelancer"
+from app.db.models.job import PlatformEnum
 
 
 class JobPostingBase(BaseModel):
@@ -20,7 +14,16 @@ class JobPostingBase(BaseModel):
     budget: Optional[float] = None
     required_skills: List[str]
     url: HttpUrl
-    extracted_at: datetime
+
+
+class JobPostingUpsert(BaseModel):
+    url: HttpUrl
+
+    platform: Optional[PlatformEnum] = None
+    job_title: Optional[str] = None
+    description: Optional[str] = None
+    budget: Optional[float] = None
+    required_skills: Optional[List[str]] = None
 
 
 class JobPostingCreate(JobPostingBase):

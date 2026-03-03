@@ -31,7 +31,6 @@ class JobPosting(Base):
     budget = Column(DECIMAL, nullable=True)
     required_skills = Column(JSON, nullable=False)
     url = Column(String, nullable=False, unique=True)
-    extracted_at = Column(DateTime, nullable=False)
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
