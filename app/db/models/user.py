@@ -1,8 +1,12 @@
 """User model."""
 
 import enum
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum, TypeDecorator
+import uuid
+
+from sqlalchemy import JSON, Boolean, Column, DateTime, Numeric, String, TypeDecorator
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.sql import func
+
 from app.db.database import Base
 
 
@@ -15,14 +19,14 @@ class UserRole(str, enum.Enum):
 
 class UserRoleEnum(TypeDecorator):
     """Type decorator to ensure enum values are used, not names."""
-    
+
     impl = String
     cache_ok = True
-    
+
     def __init__(self):
         super().__init__()
         self.enum = UserRole
-    
+
     def process_bind_param(self, value, dialect):
         """Convert enum to its value for database storage."""
         if value is None:
@@ -37,7 +41,7 @@ class UserRoleEnum(TypeDecorator):
             except ValueError:
                 raise ValueError(f"Invalid role value: {value}")
         return value
-    
+
     def process_result_value(self, value, dialect):
         """Convert database value back to enum."""
         if value is None:
@@ -52,13 +56,26 @@ class User(Base):
 
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    username = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    full_name = Column(String, nullable=True)
+    id = Column(
+        PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False
+    )
+    email = Column(String(320), unique=True, index=True, nullable=False)
+    username = Column(String(100), unique=True, index=True, nullable=False)
+    full_name = Column(String(255), nullable=True)
+    password_hash = Column(String(1024), nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    is_admin = Column(Boolean, default=False, nullable=False)
     role = Column(UserRoleEnum(), default=UserRole.USER, nullable=False)
-    is_active = Column(Boolean, default=True)
-    is_superuser = Column(Boolean, default=False)  # Keep for backward compatibility
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    skills = Column(JSON, server_default="[]", nullable=False)
+    experience_summary = Column(String, nullable=True)
+    portfolio_links = Column(JSON, server_default="[]", nullable=False)
+    preferred_rate = Column(Numeric(10, 2), nullable=True)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )

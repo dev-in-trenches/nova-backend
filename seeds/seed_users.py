@@ -44,11 +44,11 @@ async def seed_users():
                 admin_user = User(
                     email=admin_email,
                     username=admin_username,
-                    hashed_password=hash_password(admin_password),
+                    password_hash=hash_password(admin_password),
                     full_name="Administrator",
                     role=UserRole.ADMIN,
                     is_active=True,
-                    is_superuser=True,
+                    is_admin=True,
                 )
                 session.add(admin_user)
                 await session.flush()
@@ -98,11 +98,11 @@ async def seed_users():
                     new_user = User(
                         email=user_data["email"],
                         username=user_data["username"],
-                        hashed_password=hash_password(user_data["password"]),
+                        password_hash=hash_password(user_data["password"]),
                         full_name=user_data["full_name"],
                         role=UserRole.USER,
                         is_active=True,
-                        is_superuser=False,
+                        is_admin=False,
                     )
                     session.add(new_user)
                     await session.flush()

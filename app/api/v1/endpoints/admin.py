@@ -1,6 +1,7 @@
 """Admin endpoints."""
 
 from typing import List
+from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,7 +27,7 @@ async def list_all_users(
 
 @router.patch("/users/{user_id}/role", response_model=UserResponse)
 async def update_user_role(
-    user_id: int,
+    user_id: UUID,
     role: UserRole,
     current_user: dict = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),
@@ -41,7 +42,7 @@ async def update_user_role(
 
 @router.patch("/users/{user_id}/activate", response_model=UserResponse)
 async def toggle_user_activation(
-    user_id: int,
+    user_id: UUID,
     is_active: bool,
     current_user: dict = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db),

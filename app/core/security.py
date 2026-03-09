@@ -10,6 +10,7 @@ from fastapi.security import OAuth2PasswordBearer
 from app.core.config import settings
 from app.db.database import get_db
 from app.db.repositories.user_repository import UserRepository
+import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -75,11 +76,17 @@ async def get_current_user(
     # Fetch user from database to get latest role
     user_id = payload.get("user_id")
     if user_id:
+        try:
+            user_id = uuid.UUID(user_id)
+        except Exception:
+            user_id = None
+
+    if user_id:
         user_repository = UserRepository(db)
         user = await user_repository.get_by_id(user_id)
         if user:
             payload["role"] = user.role.value if user.role else "user"
-            payload["is_superuser"] = user.is_superuser
+            payload["is_admin"] = user.is_admin
 
     return payload
 
@@ -87,9 +94,9 @@ async def get_current_user(
 async def get_current_admin_user(current_user: dict = Depends(get_current_user)) -> dict:
     """Dependency to ensure current user is an admin."""
     role = current_user.get("role")
-    is_superuser = current_user.get("is_superuser", False)
+    is_admin = current_user.get("is_admin", False)
 
-    if role != "admin" and not is_superuser:
+    if role != "admin" and not is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions. Admin access required.",
